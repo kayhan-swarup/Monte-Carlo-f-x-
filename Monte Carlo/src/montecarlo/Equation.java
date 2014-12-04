@@ -7,6 +7,8 @@ import java.awt.Graphics2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.io.StringBufferInputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
@@ -19,22 +21,24 @@ public class Equation extends JPanel{
 		double constant = 1;
 	ArrayList<Segment> equationList = new ArrayList<Equation.Segment>();
 	public Equation(String str){
-		
+		Segment segment;
 		this.str =  str;
 		Scanner sc;
 		int t=0;
 		int start_point=0;
-		for(int i=0; i<str.length();i++){
-			if(i+1 == str.length() || str.charAt(i)=='+' || str.charAt(i)=='-'){
+		for(int i=1; i<str.length();i++){
+
 				if(str.charAt(i)=='+'||str.charAt(i)=='-'){
-					equationList.add(new Segment(str.substring(start_point,i),start_point>0&&str.charAt(start_point-1)=='-'));
+					segment = new Segment(str.substring(start_point,i));
+					if(str.charAt(i)=='-')
+						start_point  = i;
+					else start_point = i+1;
+					equationList.add(segment);
 					}
 				else if(i+1==str.length()){
-					equationList.add(new Segment(str.substring(start_point,str.length()),start_point>0&&str.charAt(start_point-1)=='-'));
+					equationList.add(new Segment(str.substring(start_point,str.length())));
 				}
-				if(i+1<str.length())
-					start_point = i+1;
-			}
+			
 		}
 		
 		
@@ -65,62 +69,23 @@ public class Equation extends JPanel{
 			this.constant = con;
 			this.power = pow;
 		}
-		Segment(String str,boolean isNegative){
+		
+		Segment(String str){
+			System.out.println(str);
+			if(str.charAt(0)=='x')
+				constant = 1;
+			else if(str.contains("x"))
+				constant *= Double.parseDouble(str.substring(0, str.indexOf('x')));
+			else constant *= Double.parseDouble(str);
 			
-			int start_time = 0;
-//			System.out.println(str);
-			Scanner sc= new Scanner(str);
-			String con="";
-			String pow="";
-			if(isNegative)
-				constant = -1;
-			if(str.length()>0&&str.charAt(str.length()-1)=='x'){
-				if(str.charAt(0)=='x')
-					constant *= 1;
-				else
-					constant *= Double.parseDouble(str.substring(0,str.length()-1));
+			if(str.contains("^"))
+				power = Double.parseDouble(str.substring(str.indexOf('^')+1, str.length()));
+			if(str.contains("x")&&!str.contains("^"))
 				power = 1;
-			}else if(!str.contains("x")){
-				constant *= Double.parseDouble(str);
-				power = 0;
-			}else if(str.charAt(0)=='x'){
-				constant=1*constant;
-				if(str.length()>2&&str.charAt(1)=='^'){
-					power = Double.parseDouble(str.substring(2,str.length()));
-					
-				}else if(!str.contains("^"))
-					power = 1;
-					
-			}else if(str.charAt(start_time)>=48&&str.charAt(start_time)<=57&&str.contains("^")){
-				int t=0;
-				while(str.length()>t&&str.charAt(t)!='x'){
-					t++;
-					
-				}
-				constant *= Double.parseDouble(str.substring(start_time, t));
-				if((str.length()>t+2&&str.charAt(t+1)=='^'&&str.charAt(t+2)>=48&&str.charAt(t+2)<=57)){
-					t = t +2;
-
-					
-						pow += str.charAt(t++);
-						
-					
-					power = Double.parseDouble(pow);
-						
-					
-				}
-					
-					
-				
-					
-				
+			System.out.println("Constant:"+constant+" power: "+power);
 			
-			}
-			
-			
-			System.out.print("con:"+constant+"  \n pow:"+power+"\n");
-				
 		}
+
 		double getValue(double x){
 			return constant * Math.pow(x, power);
 		}
@@ -142,26 +107,7 @@ public class Equation extends JPanel{
 		
 	}
 	
-	public double getArea(){
-		double area = 0;
-		double count = 0;
-		Graphics g = getGraphics();
-				
-		g.setColor(Color.RED);
-		
-		for(int i=0;i<1000;i++){
-			double randX = new Random().nextDouble()*(MonteCarlo.x2-MonteCarlo.x1) + MonteCarlo.x1;
-			double randY = new Random().nextDouble()*20;
-			System.out.println(randX+" "+randY);
-			g.drawOval((int)randX, (int)randY, 2, 2);
-			if(getValue(randX)>=randY)
-				count++;
 
-		}
-		
-		area = (double) 20*(MonteCarlo.x2-MonteCarlo.x1) * count/1000;
-		return area;
-	}
 	
 	
 	public double area = 0;
@@ -181,7 +127,7 @@ public class Equation extends JPanel{
 			double y1 = getValue(i);double y2 = getValue((i+.3));
 			g2.draw(new Line2D.Double(new Point2D.Double(getWindowX(i),getWindowY(y1)),new Point2D.Double(getWindowX(i+.3),getWindowY(y2))));
 			if(i%40==0){
-				System.out.println("[X,Y] => ["+getWindowX(i)+", "+getWindowY(y1)+"]");
+//				System.out.println("[X,Y] => ["+getWindowX(i)+", "+getWindowY(y1)+"]");
 			}
 		}
 		
@@ -201,7 +147,7 @@ public class Equation extends JPanel{
 		for(i=0;i<100000;i++){
 			double randX = new Random().nextDouble()*(MonteCarlo.x2-MonteCarlo.x1) + MonteCarlo.x1;
 			double randY = new Random().nextDouble()*20;
-			System.out.println(randX+" "+randY);
+//			System.out.println(randX+" "+randY);
 			g2.fill(new Ellipse2D.Double(getWindowX(randX),getWindowY(randY),.5,.5));
 			if(getValue(randX)>=randY)
 				count++;
